@@ -17,8 +17,18 @@ Sistema web para gestão de documentos com:
 
 - Backend: Node.js + Express (CommonJS)
 - Frontend: React + Vite (ESM)
-- Testes backend: runner nativo do Node (`node:test`)
+- Testes: runner nativo do Node (`node:test`) no backend e frontend
+- Frontend requer Node.js 24 ou superior
 - Sem TypeScript nesta fase (JavaScript puro)
+
+## Comandos
+
+- Backend: `cd backend && npm test`; desenvolvimento: `cd backend && npm run dev`
+- Frontend: `cd frontend && npm test && npm run build`; desenvolvimento: `cd frontend && npm run dev`
+- Execute os comandos na pasta de cada pacote; não há scripts na raiz.
+
+Consulte [a especificação](../docs/specs/dms-spec.md) como fonte de verdade para
+contratos da API, configuração, requisitos e critérios de aceite.
 
 ## Princípios obrigatórios
 
@@ -35,9 +45,13 @@ Separe responsabilidades em quatro camadas dentro de `backend/src`:
 - `controllers/`: tratam entrada/saída HTTP e validação básica
 - `services/`: concentram as regras de negócio
 - `repositories/`: cuidam da persistência
+- `middleware/`: integra o upload HTTP com `multer`; mantenha regras de negócio
+  nos services e formatação de respostas nos controllers
 
 Fluxo de dependência: `routes -> controllers -> services -> repositories`.
 Camadas internas não conhecem camadas externas.
+Use os arquivos existentes em `backend/src` como referência de nomenclatura e
+estilo antes de criar novas camadas.
 
 ## Endpoints previstos
 
@@ -61,6 +75,8 @@ Camadas internas não conhecem camadas externas.
 - A comunicação com o backend é feita via `fetch`, através do prefixo `/api`
   (proxy configurado no Vite)
 - Reutilize componentes e evite duplicação
+- Mantenha chamadas HTTP em `frontend/src/services` e cubra-as em
+  `frontend/test`; use componentes funcionais com hooks.
 
 ## Estilo de código
 
@@ -72,5 +88,7 @@ Camadas internas não conhecem camadas externas.
 ## Restrições gerais
 
 - Não quebrar funcionalidades existentes
-- Manter o seed simples e evolutivo
 - Preferir dependências já presentes no `package.json`
+- Metadados são voláteis e ficam em memória; arquivos ficam exclusivamente no
+  filesystem local. Não introduza banco de dados ou armazenamento externo sem
+  mudança explícita de escopo.
