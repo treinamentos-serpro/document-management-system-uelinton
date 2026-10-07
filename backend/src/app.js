@@ -1,27 +1,33 @@
-// Seed do servidor backend do Document Management System.
-//
-// Este arquivo é apenas um ponto de partida mínimo. Ao longo do workshop você
-// vai usar o Agent Mode do GitHub Copilot para construir as camadas:
-//   - routes/       (definição das rotas)
-//   - controllers/  (entrada HTTP e validação)
-//   - services/     (regras de negócio)
-//   - repositories/ (persistência: arquivos locais + metadados em memória)
-//
-// Restrição do projeto: uploads são gravados no filesystem local da aplicação
-// usando multer com diskStorage. Não utilize provedores externos.
-
 const express = require('express');
+const path = require('node:path');
+const createDocumentRepository = require('./repositories/documentRepository');
+const createDocumentService = require('./services/documentService');
+const createDocumentController = require('./controllers/documentController');
+const createDocumentRoutes = require('./routes/documentRoutes');
+const { createUpload, handleDocumentError } = require('./middleware/documentMiddleware');
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+function createApp(options = {}) {
+  const storageDir = path.resolve(__dirname, '..', options.storageDir || process.env.STORAGE_DIR || 'storage');
+  const maxUploadBytes = Number(options.maxUploadBytes ?? process.env.MAX_UPLOAD_BYTES ?? 10485760);
+  if (!Number.isSafeInteger(maxUploadBytes) || maxUploadBytes <= 0) {
+    throw new Error('MAX_UPLOAD_BYTES deve ser um inteiro positivo.');
+  }
 
-// Endpoint de verificação de saúde. As demais rotas (/upload, /documents,
-// /documents/:id/download) serão implementadas durante o Passo 2.
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
+  const app = express();
+  const repository = createDocumentRepository(storageDir);
+  const service = createDocumentService(repository);
+  const controller = createDocumentController(service);
+
+  app.use(express.json());
+  app.get('/health', (req, res) => res.json({ status: 'ok' }));
+  app.use(createDocumentRoutes(controller, createUpload(storageDir, maxUploadBytes)));
+  app.use(handleDocumentError);
+  return app;
+}
+
+const app = createApp();
 
 if (require.main === module) {
   app.listen(PORT, () => {
@@ -30,3 +36,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports.createApp = createApp;

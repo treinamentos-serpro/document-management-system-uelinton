@@ -11,10 +11,12 @@ Crie a estrutura completa de uma camada para o recurso `${input:recurso:nome do 
 
 Gere os arquivos em `backend/src`:
 
-1. `routes/${input:recurso}.routes.js` - define os endpoints e delega ao controller.
-2. `controllers/${input:recurso}.controller.js` - trata entrada/saída HTTP e validação básica.
-3. `services/${input:recurso}.service.js` - concentra as regras de negócio.
-4. `repositories/${input:recurso}.repository.js` - cuida da persistência.
+1. `routes/${input:recurso}Routes.js` - define os endpoints e delega ao controller.
+2. `controllers/${input:recurso}Controller.js` - trata entrada/saída HTTP e validação básica.
+3. `services/${input:recurso}Service.js` - concentra as regras de negócio.
+4. `repositories/${input:recurso}Repository.js` - cuida da persistência.
+
+Use CommonJS no backend e siga o padrão das camadas existentes em `backend/src`.
 
 Requisitos:
 

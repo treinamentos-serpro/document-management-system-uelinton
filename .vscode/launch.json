@@ -1,0 +1,58 @@
+{
+    // Use o IntelliSense para saber mais sobre os atributos possíveis.
+    // Focalizar para exibir as descrições dos atributos existentes.
+    // Para obter mais informações, acesse: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "DMS: Backend",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/backend/src/app.js",
+            "cwd": "${workspaceFolder}/backend",
+            "console": "integratedTerminal",
+            "env": {
+                "PORT": "3000"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "DMS: Frontend",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "dev",
+                "--",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "5173",
+                "--strictPort"
+            ],
+            "cwd": "${workspaceFolder}/frontend",
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "serverReadyAction": {
+                "pattern": "Local:.*(https?://localhost:[0-9]+)",
+                "uriFormat": "%s",
+                "action": "openExternally"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "DMS: Backend + Frontend",
+            "configurations": [
+                "DMS: Backend",
+                "DMS: Frontend"
+            ],
+            "stopAll": true
+        }
+    ]
+}
