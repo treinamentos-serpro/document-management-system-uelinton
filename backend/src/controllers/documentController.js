@@ -1,3 +1,8 @@
+function toPublicDocument(document) {
+  const { id, originalName, size, uploadedAt, owner } = document;
+  return { id, originalName, size, uploadedAt, owner };
+}
+
 function createDocumentController(service) {
   return {
     upload(req, res) {
@@ -6,10 +11,10 @@ function createDocumentController(service) {
           error: { code: 'FILE_REQUIRED', message: 'Envie um arquivo no campo file.' },
         });
       }
-      res.status(201).json({ document: service.upload(req.file, req.owner) });
+      res.status(201).json({ document: toPublicDocument(service.upload(req.file, req.owner)) });
     },
     list(req, res) {
-      res.json({ documents: service.list(req.owner) });
+      res.json({ documents: service.list(req.owner).map(toPublicDocument) });
     },
     async download(req, res, next) {
       const document = await service.download(req.params.id, req.owner);

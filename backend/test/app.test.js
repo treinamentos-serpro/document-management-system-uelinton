@@ -67,7 +67,9 @@ test('lista somente documentos do proprietário, do mais recente para o mais ant
   await fixture.upload('outro', 'usuario-2');
   const response = await fixture.request('/documents', { headers: { 'X-User-Id': 'usuario-1' } });
   assert.strictEqual(response.status, 200);
-  assert.deepStrictEqual((await response.json()).documents.map((document) => document.id), [second.id, first.id]);
+  const { documents } = await response.json();
+  assert.deepStrictEqual(documents.map((document) => document.id), [second.id, first.id]);
+  assert.deepStrictEqual(Object.keys(documents[0]).sort(), ['id', 'originalName', 'owner', 'size', 'uploadedAt']);
   const empty = await fixture.request('/documents', { headers: { 'X-User-Id': 'usuario-3' } });
   assert.deepStrictEqual(await empty.json(), { documents: [] });
 });
