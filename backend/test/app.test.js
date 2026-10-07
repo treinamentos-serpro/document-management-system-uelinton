@@ -60,6 +60,25 @@ test('upload grava os bytes em disco com nome seguro e retorna apenas metadados 
   assert.strictEqual(await readFile(path.join(fixture.storageDir, files[0]), 'utf8'), 'Documento de teste');
 });
 
+test('upload aceita um arquivo vazio e preserva seu tamanho em disco', async (context) => {
+  const fixture = await createFixture(context);
+  const content = '';
+  const response = await fixture.upload(content);
+  assert.strictEqual(response.status, 201);
+  const { document } = await response.json();
+  assert.strictEqual(document.size, 0);
+  const [storageName] = await readdir(fixture.storageDir);
+  assert.strictEqual(await readFile(path.join(fixture.storageDir, storageName), 'utf8'), content);
+});
+
+test('listagem inicial retorna uma lista vazia sem criar arquivos', async (context) => {
+  const fixture = await createFixture(context);
+  const response = await fixture.request('/documents', { headers: { 'X-User-Id': 'usuario-1' } });
+  assert.strictEqual(response.status, 200);
+  assert.deepStrictEqual(await response.json(), { documents: [] });
+  assert.deepStrictEqual(await readdir(fixture.storageDir), []);
+});
+
 test('lista somente documentos do proprietário, do mais recente para o mais antigo', async (context) => {
   const fixture = await createFixture(context);
   const first = (await (await fixture.upload('primeiro')).json()).document;
@@ -84,6 +103,31 @@ test('download devolve os bytes originais como anexo', async (context) => {
   assert.strictEqual(response.status, 200);
   assert.match(response.headers.get('content-disposition'), /attachment;.*relatorio\.txt/);
   assert.deepStrictEqual(new Uint8Array(await response.arrayBuffer()), content);
+});
+
+test('arquivos com o mesmo nome mantêm identificadores e downloads independentes', async (context) => {
+  const fixture = await createFixture(context);
+  const documents = [];
+  for (const content of ['primeiro conteúdo', 'segundo conteúdo']) {
+    const response = await fixture.upload(content);
+    assert.strictEqual(response.status, 201);
+    documents.push({ document: (await response.json()).document, content });
+  }
+  assert.notStrictEqual(documents[0].document.id, documents[1].document.id);
+  assert.strictEqual((await readdir(fixture.storageDir)).length, 2);
+  const list = await fixture.request('/documents', { headers: { 'X-User-Id': 'usuario-1' } });
+  assert.strictEqual(list.status, 200);
+  assert.deepStrictEqual(await list.json(), {
+    documents: documents.map(({ document }) => document).reverse(),
+  });
+  for (const { document, content } of documents) {
+    const response = await fixture.request(`/documents/${document.id}/download`, {
+      headers: { 'X-User-Id': document.owner },
+    });
+    assert.strictEqual(response.status, 200);
+    assert.match(response.headers.get('content-disposition'), /attachment;.*relatorio\.txt/);
+    assert.strictEqual(await response.text(), content);
+  }
 });
 
 test('documento inexistente ou de outro proprietário retorna 404', async (context) => {
